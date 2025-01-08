@@ -1,7 +1,7 @@
 # Secure-File-Transfer
 SecureDrop is a secure file transfer application with user authentication, encryption, and communication via both TCP and UDP protocols. It supports the transfer of files using asymmetric RSA encryption and AES encryption for confidentiality. The application is designed to allow users to securely communicate and send files over an encrypted channel.
 
-Files in the Project:
+#Files in the Project:
 *Contacts.py: Manages the contacts (email addresses and full names) of users. This file allows users to add new contacts and list existing contacts.
 * Encrypt|Decrypt.py: Handles the encryption and decryption of files. Files are encrypted using AES with RSA to secure the symmetric key. The encryption ensures that only authorized users can access the content.
 *TCP_Client.py: Implements the TCP client that connects to a server using SSL/TLS. It facilitates secure file transfer over TCP.
