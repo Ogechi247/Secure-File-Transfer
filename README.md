@@ -19,3 +19,7 @@ SecureDrop is a secure file transfer application with user authentication, encry
 * Secure File Transfer: Files are transferred securely using the TCP or UDP protocols with SSL/TLS encryption.
 * Contact Management: Users can add new contacts, list existing contacts, and send files securely to these contacts.
 * Public and Private Keys: RSA keys are used to encrypt the symmetric AES key, ensuring that only the intended recipient can decrypt the file. The private key is protected with a passphrase.
+
+## Future Plans:
+* Listing Online Contacts: A feature will be added to track online contacts, making it easier for users to know who is available for file transfer at any given time.
+* Certificate Authority (CA): A certificate authority will be implemented to authenticate users before allowing file transfers. This will provide an additional layer of trust by ensuring that only verified users can send or receive files.
