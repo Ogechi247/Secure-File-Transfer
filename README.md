@@ -12,3 +12,10 @@ SecureDrop is a secure file transfer application with user authentication, encry
 * User_Registration.py: Allows new users to register by providing their full name, email address, and password. The password is securely hashed before saving.
 * decrypt_private_key.py: A script to decrypt the user's private RSA key using a passphrase.
 * generatekeys.py: Generates a new RSA key pair (private and public keys) and saves them in files. The private key is encrypted with a passphrase for added security.
+
+ ## Features:
+* User Authentication: Users can register with their email and password, which is securely hashed before storing. They can log in using their credentials.
+* File Encryption/Decryption: Files are encrypted using AES for confidentiality. The symmetric key used in AES is encrypted using the recipient's public RSA key.
+* Secure File Transfer: Files are transferred securely using the TCP or UDP protocols with SSL/TLS encryption.
+* Contact Management: Users can add new contacts, list existing contacts, and send files securely to these contacts.
+* Public and Private Keys: RSA keys are used to encrypt the symmetric AES key, ensuring that only the intended recipient can decrypt the file. The private key is protected with a passphrase.
