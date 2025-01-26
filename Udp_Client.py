@@ -1,21 +1,44 @@
 import socket
 
-def udp_broadcast():
-    # Prompt the client user for their name and port number
-    name = input("Enter your name: ")
-    port = int(input("Enter the port number to send the broadcast to: "))
+def udp_server():
+    # Ask the user for a server identity and port number
+    server_identity = input("Please, who are you? ")
+    port = int(input("Enter the port number to listen on: "))
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    # Create a socket for listening
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    # Broadcast a message to the server
-    message = f"Hello {name}, I'm B, nice to meet you".encode()
-    client.sendto(message, ("<broadcast>", port))
-    print("Broadcast sent.")
+    # Set socket option to reuse the address
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    # Wait for a response from the server
-    data, addr = client.recvfrom(1024)
-    print(f"Received response: {data.decode()}")
+    try:
+        server_socket.bind(("0.0.0.0", port))  # Listen on the specified port
+        print(f"Server ({server_identity}) is listening on port {port}...")
 
-# Send a UDP broadcast
-udp_broadcast()
+        while True:
+            # Wait for a broadcast message
+            data, addr = server_socket.recvfrom(1024)
+            message = data.decode()
+
+            # Parse the sender and recipient from the message
+            try:
+                sender, _, recipient = message.partition(" is looking for ")
+                print(f"Message received: {sender} is looking for {recipient}")
+
+                # Check if the broadcast matches the server identity
+                if recipient.strip() == server_identity:
+                    # Respond to the sender
+                    response = f"Hello {sender}, this is {server_identity}. Nice to meet you!"
+                    server_socket.sendto(response.encode(), addr)
+                    print(f"Response sent to {sender}")
+            except ValueError:
+                print("Invalid message format received.")
+    except KeyboardInterrupt:
+        print("\nServer script terminated by user.")
+    finally:
+        # Ensure the socket is closed
+        server_socket.close()
+        print("Socket closed. Exiting gracefully.")
+
+if __name__ == "__main__":
+    udp_server()
