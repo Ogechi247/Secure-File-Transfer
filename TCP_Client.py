@@ -1,42 +1,36 @@
 import socket
 import ssl
-import os
 
-# File paths based on my actual filenames
-client_cert = 'Jason_cert.pem'
-client_key = 'private.pem'
-ca_cert = 'ca_cert.pem'
+def tcp_tls_client():
+    server_address = input("Enter the server address: ")
+    port = int(input("Enter the port number to connect to: "))
+    sender_identity = input("Please, who are you? ")
+    recipient_identity = input("Who are you looking for? ")
 
-# Create a socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    context = ssl.create_default_context()
+    context.check_hostname = False  # Skip hostname validation
+    context.verify_mode = ssl.CERT_NONE  # Disable server certificate verification
 
-# Create an SSL context
-context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-context.load_cert_chain(certfile=client_cert, keyfile=client_key)
-context.load_verify_locations(cafile=ca_cert)
-context.verify_mode = ssl.CERT_OPTIONAL
+    with socket.create_connection((server_address, port)) as client_socket:
+        with context.wrap_socket(client_socket, server_hostname=server_address) as secure_socket:
+            print(f"Connected to {server_address}:{port} with TLS encryption")
 
-# Connect to the server 
-port = int(input("Enter the port number to use for communication: "))
+            # Send a message to the server
+            message = f"{sender_identity} is looking for {recipient_identity}"
+            secure_socket.send(message.encode())
 
-try:
-    client_socket.connect(('localhost', port))
-    # Wrap the socket with SSL
-    ssl_client_socket = context.wrap_socket(client_socket, server_hostname='localhost')
+            # Receive the server's response
+            response = secure_socket.recv(1024).decode()
+            print(f"Server says: {response}")
 
-    # Send the file
-    file_path = input("Enter the path of the file to send: ")
-    if not os.path.exists(file_path):
-        print(f"Error: The file '{file_path}' does not exist.")
-    else:
-        try:
-            with open(file_path, "rb") as f:
-                while chunk := f.read(1024):
-                    ssl_client_socket.send(chunk)
-            print("File sent successfully.")
-        except Exception as e:
-            print(f"Error while sending the file: {e}")
-finally:
-    # Close the connection
-    ssl_client_socket.close()
-    print("Connection closed.")
+            if "Sending file..." in response:
+                file_name = f"{recipient_identity}_received_file"
+                with open(file_name, "wb") as file:
+                    while chunk := secure_socket.recv(1024):
+                        file.write(chunk)
+                print(f"File saved as '{file_name}'")
+            else:
+                print("No file received.")
+
+if name == "main":
+    tcp_tls_client()
