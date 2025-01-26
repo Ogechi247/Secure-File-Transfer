@@ -1,46 +1,57 @@
 import socket
 import ssl
 import os
-import random
 
-# File paths based on my actual filenames
-server_cert = 'oge_cert.pem'
-server_key = 'private.pem'
-ca_cert = 'ca_cert.pem'
+def tcp_tls_server():
+    server_identity = input("Please, who are you? ")  # Server identity
+    port = int(input("Enter the port number to listen on: "))
+    file_to_send = input("Enter the file path to broadcast: ")
 
-# Create a socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if not os.path.exists(file_to_send):
+        print("File not found!")
+        return
 
-# Bind to a random port
-port = random.randint(1024, 65535)
-server_socket.bind(('0.0.0.0', port))
-server_socket.listen(1)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind(("0.0.0.0", port))
+    server_socket.listen(5)
 
-# Create an SSL context
-context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-passphrase = input("Enter PEM pass phrase: ")
-context.load_cert_chain(certfile=server_cert, keyfile=server_key, password=passphrase)
-context.load_verify_locations(cafile=ca_cert)
-context.verify_mode = ssl.CERT_OPTIONAL
+    # Configure TLS context
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(certfile="Jason_cert.pem", keyfile="private.pem")  # Server certificate only
+    context.check_hostname = False  # No hostname validation
+    context.verify_mode = ssl.CERT_NONE  # No client certificate verification
 
-print(f"Server listening for connections on port {port}...")
+    print(f"Server ({server_identity}) is listening on port {port}...")
 
-# Accept incoming connection
-connection, address = server_socket.accept()
-print("Client connected:", address)
+    try:
+        while True:
+            client_socket, addr = server_socket.accept()
+            print(f"Connection established with {addr}")
 
-# Wrap the connection with SSL
-ssl_connection = context.wrap_socket(connection, server_side=True)
+            secure_socket = context.wrap_socket(client_socket, server_side=True)
+            try:
+                data = secure_socket.recv(1024).decode()
+                sender, _, recipient = data.partition(" is looking for ")
+                print(f"Message received: {sender} is looking for {recipient}")
 
-# Receive the file
-with open("received_file", "wb") as f:
-    while True:
-        data = ssl_connection.recv(1024)
-        if not data:
-            break
-        f.write(data)
-print("File received successfully.")
+                if recipient.strip() == server_identity:
+                    secure_socket.send(f"Hello {sender}, this is {server_identity}. Sending file...".encode())
+                    with open(file_to_send, "rb") as file:
+                        while chunk := file.read(1024):
+                            secure_socket.send(chunk)
+                    print(f"File '{file_to_send}' sent to {sender}")
+                else:
+                    secure_socket.send("Identity mismatch!".encode())
+            except Exception as e:
+                print(f"Error during communication: {e}")
+            finally:
+                secure_socket.close()
+    except KeyboardInterrupt:
+        print("\nServer shutting down.")
+    finally:
+        server_socket.close()
+        print("Socket closed.")
 
-# Close the connection
-ssl_connection.close()
-server_socket.close()
+if __name__ == "__main__":
+    tcp_tls_server()
